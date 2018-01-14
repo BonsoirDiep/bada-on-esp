@@ -14,17 +14,23 @@
 #define WIFI_PASSWORD "12345678diepk3r" // don't mind
 
 //Design i2c max 2, ai max 1...
-int myPins[] = {0,0,0,0,0}; // toi da 5 cam bien
-int myLights[] = {0,0,0,0,0}; // toi da 5 den
-int myAnalogs[] = {0,0,0,0,0}; // toi da 5 den xoay
-int myI2c[] = {0,0,0,0,0}; // toi da 5 cam bien i2c
+int mySensors[] = {0,0,0,0,0}; // analog sensor
+int myLights[] = {0,0,0,0,0}; // on/off
+int myAnalogs[] = {0,0,0,0,0}; // analog output
+int myI2c[] = {0,0,0,0,0}; // i2c sensor
 String productKey = String("hFrPLqQKIbmU");
 
 void getDataDesign(){
   int i = 0;
   String data;
   char str[11];
-  
+  // reset
+  for(i = 0;i<5;i++){
+    mySensors[i] = 0;
+	myLights[i] = 0;
+	myAnalogs[i] = 0;
+	myI2c[i] = 0;
+  }
   data = Firebase.getString("product/"+productKey+"/kit/i2c");
   if (Firebase.failed()) {
       Serial.print("load data error: ");
@@ -63,7 +69,7 @@ void getDataDesign(){
       if(i>4) break;
       int node = atoi(pch);
       if(node>0){
-         myPins[i] = node;
+         mySensors[i] = node;
          i++;
          pch = strtok (NULL, ";");
       } else break;
@@ -174,17 +180,17 @@ void loop() {
     }
   }
   for (i = 0; i < 5; i = i + 1) {
-    if(myPins[i]>0){
+    if(mySensors[i]>0){
       /*
-      float data = Firebase.getFloat("product/"+productKey+"/sens/node"+ String(myPins[i]));
+      float data = Firebase.getFloat("product/"+productKey+"/sens/node"+ String(mySensors[i]));
       if (!Firebase.failed()) {
            //Serial.println(data);
       }
       */
-      int analogValue = analogRead(myPins[i]);
+      int analogValue = analogRead(mySensors[i]);
       //float millivolts = (analogValue/1024.0) * 3300; //3300 is the voltage provided by NodeMCU
       //float celsius = millivolts/10;
-      Firebase.setFloat("product/"+productKey+"/sens/node"+ String(myPins[i]), analogValue);
+      Firebase.setFloat("product/"+productKey+"/sens/node"+ String(mySensors[i]), analogValue);
       delay(90);
     }
   }
