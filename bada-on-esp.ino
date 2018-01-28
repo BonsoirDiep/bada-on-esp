@@ -13,13 +13,14 @@
 #define WIFI_SSID "y5.cafe" // don't mind
 #define WIFI_PASSWORD "12345678diepk3r" // don't mind
 
-//Design i2c max 2, ai max 1...
+//Design oneWire max 2, ai max 1...
 int mySensors[] = {0,0,0,0,0}; // analog sensor
 int myLights[] = {0,0,0,0,0}; // on/off
 int myAnalogs[] = {0,0,0,0,0}; // analog output
-int myI2c[] = {0,0,0,0,0}; // i2c sensor
+int myOnes[] = {0,0,0,0,0}; // oneWire sensor
 String productKey = String("hFrPLqQKIbmU");
 
+unsigned long time1 = 0;
 void getDataDesign(){
   int i = 0;
   String data;
@@ -29,9 +30,9 @@ void getDataDesign(){
     mySensors[i] = 0;
 	myLights[i] = 0;
 	myAnalogs[i] = 0;
-	myI2c[i] = 0;
+	myOnes[i] = 0;
   }
-  data = Firebase.getString("product/"+productKey+"/kit/i2c");
+  data = Firebase.getString("product/"+productKey+"/kit/one");
   if (Firebase.failed()) {
       Serial.print("load data error: ");
       Serial.println(Firebase.error());
@@ -46,7 +47,7 @@ void getDataDesign(){
       if(i>4) break;
       int node = atoi(pch);
       if(node>0){
-         myI2c[i] = node;
+         myOnes[i] = node;
          i++;
          pch = strtok (NULL, ";");
       } else break;
@@ -127,9 +128,9 @@ void getDataDesign(){
 void setup() {
   pinMode(D0, OUTPUT);
   pinMode(D1, OUTPUT);
-  //pinMode(D2, OUTPUT); // i2c support
+  //pinMode(D2, OUTPUT); // oneWire support
   // pinMode(D3, OUTPUT);// not-use: GPIO0
-  //pinMode(D4, OUTPUT); // i2c support
+  //pinMode(D4, OUTPUT); // oneWire support
   pinMode(D5, OUTPUT);
   pinMode(D6, OUTPUT);
   pinMode(D7, OUTPUT);
@@ -170,31 +171,6 @@ void loop() {
   
   int i = 0;
   for (i = 0; i < 5; i = i + 1) {
-    if(myI2c[i]>0){
-	  OneWire oneWire(myI2c[i]);
-	  DallasTemperature sensors(&oneWire);
-	  sensors.begin();
-	  sensors.requestTemperatures();
-      Firebase.setFloat("product/"+productKey+"/sens/node"+ String(myI2c[i]), sensors.getTempCByIndex(0));
-      delay(90);
-    }
-  }
-  for (i = 0; i < 5; i = i + 1) {
-    if(mySensors[i]>0){
-      /*
-      float data = Firebase.getFloat("product/"+productKey+"/sens/node"+ String(mySensors[i]));
-      if (!Firebase.failed()) {
-           //Serial.println(data);
-      }
-      */
-      int analogValue = analogRead(mySensors[i]);
-      //float millivolts = (analogValue/1024.0) * 3300; //3300 is the voltage provided by NodeMCU
-      //float celsius = millivolts/10;
-      Firebase.setFloat("product/"+productKey+"/sens/node"+ String(mySensors[i]), analogValue);
-      delay(90);
-    }
-  }
-  for (i = 0; i < 5; i = i + 1) {
     if(myLights[i]>0){
       bool data = Firebase.getBool("product/"+productKey+"/kit/node"+ String(myLights[i]));
       if (!Firebase.failed()) {
@@ -213,5 +189,23 @@ void loop() {
       if (!Firebase.failed()) analogWrite(myAnalogs[i], (data*1023)/255);
     }
   }
-  delay(120);
+  
+  if((unsigned long) abs(millis() - time1) > 1000){
+	  for (i = 0; i < 5; i = i + 1) {
+		if(myOnes[i]>0){
+		  OneWire oneWire(myOnes[i]);
+		  DallasTemperature sensors(&oneWire);
+		  sensors.begin();
+		  sensors.requestTemperatures();
+		  Firebase.setFloat("product/"+productKey+"/sens/node"+ String(myOnes[i]), sensors.getTempCByIndex(0));
+		}
+	  }
+	  for (i = 0; i < 5; i = i + 1) {
+		if(mySensors[i]>0){
+		  int analogValue = analogRead(mySensors[i]);
+		  Firebase.setFloat("product/"+productKey+"/sens/node"+ String(mySensors[i]), analogValue);
+		}
+	  }
+	  time1 = millis();
+  }
 }
