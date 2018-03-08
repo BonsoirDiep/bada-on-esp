@@ -4,7 +4,6 @@ Design [here](https://badaiots-kz.herokuapp.com/nguoidung/thietke.html) (You nee
 
 Control and monitoring
 ```text
-	bada-on-esp.ino -> badaiots-kz.herokuapp.com/nguoidung/theodoi.html
 	bada-on-esp-v2.ino -> badaiots-kz.herokuapp.com/nguoidung/theodoi2.html
 ```
 Note:
